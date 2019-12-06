@@ -8,6 +8,7 @@ const SALT: &str = "35af8f4890981391c191e6df45b5f780812ddf0213f29299576ac1c98e18
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug)]
 pub struct Pow<T> {
     proof: u128,
+    #[serde(skip)]
     _spook: PhantomData<T>,
 }
 
@@ -113,5 +114,17 @@ mod test {
         let recieved_message: (u8, Pow<u8>) = bincode_cfg().deserialize(&message_ser).unwrap();
         assert_eq!(recieved_message, message);
         assert!(message.1.score(&message.0).unwrap() >= DIFFICULTY);
+    }
+
+    #[test]
+    /// spook data field is ignored
+    fn ser_de_no_spook() {
+        let pw: Pow<u8> = Pow {
+            proof: 0,
+            _spook: PhantomData,
+        };
+        let ser = serde_json::to_string(&pw).unwrap();
+        assert_ne!(&ser, "{\"proof\":0,\"_spook\":null}");
+        assert_eq!(&ser, "{\"proof\":0}");
     }
 }
